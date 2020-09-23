@@ -1,4 +1,4 @@
-import os  # os.system('cls')
+import os
 
 cross = u'\u253c'
 tleft = u'\u251c'
@@ -19,49 +19,124 @@ player2 = ""
 p1symbol = ""
 p2symbol = ""
 
+turn = 1;
+
 board = [[' ' for i in range(rows)] for j in range(cols)]
 
 
 def main():
-    print("emtpy")
+    #getplayerdata()
+    global player1, player2, p1symbol, p2symbol
+    player1, player2, p1symbol, p2symbol = 'X', 'O', 'X', 'O'
+
+    while True:
+        os.system('cls')
+        locals()
+        printboard()
+        num = requestnumber()
+
+        if(checkmove(num)):
+            makemove(num)
+
+            if(checkwin(num)):
+                print("jo")
+                if(turn == 1):
+                    #printboard()
+                    print(f"{player1}, has won")
+                elif(turn == 2):
+                    #printboard()
+                    print(f"{player2}, has won")
+                break
+
+        nextturn()
 
 
 def test():
+    print("empty")
+
+
+def requestnumber():
     while True:
-        string = input("\nInput a number (0-7): ")
-        if (string == "end"):
-            break
-        try:
+        global turn
+        if(turn == 1):
+            string = input(f"{player1}, it is your turn. Enter a move (number from 0 to 7): ")
+        elif(turn == 2):
+            string = input(f"{player2}, it is your turn. Enter a move (number from 0 to 7): ")
+
+        if (checkifnum(string)):
             num = int(string)
-            if (0 <= num and num <= 7):
-                print("yes")
+            if(0 <= num and num <= 7):
+                return num
             else:
-                print("out of bounce")
-        except ValueError:
-            print(f"'{string}' isn't a number")
-
-    setchar(4, 7, 'x')
-    setchar(4, 6, 'x')
-    setchar(4, 5, 'x')
-    setchar(4, 4, 'x')
-    setchar(4, 3, 'x')
-    setchar(4, 2, 'x')
-    setchar(4, 1, 'x')
-    # setchar(4, 0, 'x')
-    print(checkmove(4))
+                print("Invalid! Out of bounce")
+        else:
+            print(f"'{string}' is not a number from 0 to 7")
 
 
-def makemove(num: int, player: int):
+def checkwin(move: int):
+    locals()
+
+    symbol = ''
+    if (turn == 1):
+        symbol = p1symbol
+    elif (turn == 2):
+        symbol = p2symbol
+
+    y = 0
     for i in range(rows):
-        if (getchar(num, i) == ' '):
-            if (player == 1):
-                setchar(num, i, 'A')
-            elif (player == 2):
-                setchar(num, i, 'B')
+        if (getchar(move, i) != ' '):
+            y = i
+            break
+
+    count = 0
+    for i in range(rows - 4):
+        if (getchar(move, i) == symbol and getchar(move, i + 1) == symbol
+                and getchar(move, i + 2) == symbol and getchar(move, i + 3) == symbol):
+            return True
+
+    for i in range(cols - 4):
+        if (getchar(i, y) == symbol and getchar(i + 1, y) == symbol
+                and getchar(i + 2, y) == symbol and getchar(i + 3, y) == symbol):
+            return True
+
+    return False
+
+
+def checkifnum(string):
+    try:
+        num = int(string)
+        return True
+    except ValueError:
+        return False
+
+
+def nextturn():
+    global turn
+    if (turn == 1):
+        turn = 2
+    elif (turn == 2):
+        turn = 1
+
+
+def makemove(num: int):
+    global turn
+    for i in range(rows):
+        if (getchar(num, i) == p1symbol or getchar(num, i) == p2symbol):
+            if (turn == 1):
+                setchar(num, i - 1, p1symbol)
+            elif (turn == 2):
+                setchar(num, i - 1, p2symbol)
+            break
+        elif (i == rows - 1):
+            if (turn == 1):
+                setchar(num, i, p1symbol)
+            elif (turn == 2):
+                setchar(num, i, p2symbol)
+            break
 
 
 def checkmove(num: int):
-    if (getchar(num, 0) == ' '):
+    if (0 <= num and num <= 7 and getchar(num, 0) == ' '):
         return True
     return False
 
@@ -102,7 +177,7 @@ def getplayerdata():
             print(f"{player2}, your symbol is {p2symbol}")
             break
         else:
-            print("Invalid! Symbol already taken or none ASCII-symbol")
+            print("Invalid! Symbol already taken or symbol is none ASCII-symbol")
 
 
 def printboard():
