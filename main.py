@@ -21,13 +21,17 @@ p2symbol = ""
 
 turn = 1;
 
+lastmove = [2]
+alreadyundo = False
+
 board = [[' ' for i in range(rows)] for j in range(cols)]
 
 
 def main():
-    #getplayerdata()
-    global player1, player2, p1symbol, p2symbol
-    player1, player2, p1symbol, p2symbol = 'X', 'O', 'X', 'O'
+    getplayerdata()
+    #global player1, player2, p1symbol, p2symbol
+    #player1, player2, p1symbol, p2symbol = 'X', 'O', 'X', 'O'
+    #test()
 
     while True:
         os.system('cls')
@@ -35,37 +39,61 @@ def main():
         printboard()
         num = requestnumber()
 
-        if(checkmove(num)):
-            makemove(num)
+        try:
+            if (checkmove(num)):
+                makemove(num)
 
-            if(checkwin(num)):
-                print("jo")
-                if(turn == 1):
-                    #printboard()
-                    print(f"{player1}, has won")
-                elif(turn == 2):
-                    #printboard()
-                    print(f"{player2}, has won")
-                break
+                if (checkwinhv(num)): #  or checkwind(num)):
+                    if (turn == 1):
+                        printboard()
+                        print(f"{player1}, has won")
+                    elif (turn == 2):
+                        printboard()
+                        print(f"{player2}, has won")
+                    break
 
-        nextturn()
+                nextturn()
+        except TypeError:
+            print("fail", end='')
 
 
 def test():
-    print("empty")
+    setchar(3, 7, 'X')
+    setchar(3, 6, 'X')
+    setchar(4, 7, 'X')
+    setchar(4, 6, 'X')
+    setchar(4, 5, 'X')
+    setchar(5, 7, 'O')
+    setchar(5, 6, 'X')
+    setchar(5, 5, 'X')
+
+
+def undo():
+    global alreadyundo
+    if (alreadyundo == False):
+        x = lastmove[0]
+        y = lastmove[1]
+        setchar(x, y, ' ')
+        nextturn()
+    else:
+        print("You can only undo once each turn")
 
 
 def requestnumber():
     while True:
         global turn
-        if(turn == 1):
+        if (turn == 1):
             string = input(f"{player1}, it is your turn. Enter a move (number from 0 to 7): ")
-        elif(turn == 2):
+        elif (turn == 2):
             string = input(f"{player2}, it is your turn. Enter a move (number from 0 to 7): ")
+
+        if (string == "undo"):
+            undo()
+            break
 
         if (checkifnum(string)):
             num = int(string)
-            if(0 <= num and num <= 7):
+            if (0 <= num and num <= 7):
                 return num
             else:
                 print("Invalid! Out of bounce")
@@ -73,7 +101,7 @@ def requestnumber():
             print(f"'{string}' is not a number from 0 to 7")
 
 
-def checkwin(move: int):
+def checkwinhv(move: int):
     locals()
 
     symbol = ''
@@ -89,15 +117,67 @@ def checkwin(move: int):
             break
 
     count = 0
-    for i in range(rows - 4):
+    for i in range(rows - 3):
         if (getchar(move, i) == symbol and getchar(move, i + 1) == symbol
                 and getchar(move, i + 2) == symbol and getchar(move, i + 3) == symbol):
             return True
 
-    for i in range(cols - 4):
+    for i in range(cols - 3):
         if (getchar(i, y) == symbol and getchar(i + 1, y) == symbol
                 and getchar(i + 2, y) == symbol and getchar(i + 3, y) == symbol):
             return True
+
+    return False
+
+
+def checkwind(move: int):
+    locals()
+    leftx = 0
+    lefty = 0
+    rightx = 0
+    righty = 0
+
+    symbol = ''
+    if (turn == 1):
+        symbol = p1symbol
+    elif (turn == 2):
+        symbol = p2symbol
+
+    y = 0
+    for i in range(rows):
+        if (getchar(move, i) != ' '):
+            y = i
+            break
+
+    for i in range(min(rows, cols)):
+        if (isinbounds(leftx - 1, lefty + 1)):
+            leftx = leftx - 1
+            lefty = lefty + 1
+        else:
+            break
+
+    for i in range(min(rows, cols)):
+        if(isinbounds(rightx + 1, lefty + 1)):
+            rightx = rightx + 1
+            righty = lefty + 1
+        else:
+            break
+
+    for i in range(min(rows, cols)):
+        try:
+            if (getchar(leftx, lefty) == symbol and getchar(leftx + 1, lefty - 1) == symbol
+                    and getchar(leftx + 2, lefty - 2) == symbol and getchar(leftx + 3, lefty - 3) == symbol):
+                return True
+        except IndexError:
+            fuckoff()
+
+    for i in range(min(rows, cols)):
+        try:
+            if (getchar(rightx, righty) == symbol and getchar(rightx - 1, righty - 1) == symbol
+                    and getchar(rightx - 2, righty - 2) == symbol and getchar(rightx - 3, righty - 3) == symbol):
+                return True
+        except IndexError:
+            fuckoff()
 
     return False
 
@@ -119,19 +199,23 @@ def nextturn():
 
 
 def makemove(num: int):
-    global turn
+    global turn, lastmove
     for i in range(rows):
         if (getchar(num, i) == p1symbol or getchar(num, i) == p2symbol):
             if (turn == 1):
                 setchar(num, i - 1, p1symbol)
+                lastmove = [num, i - 1]
             elif (turn == 2):
                 setchar(num, i - 1, p2symbol)
+                lastmove = [num, i - 1]
             break
         elif (i == rows - 1):
             if (turn == 1):
                 setchar(num, i, p1symbol)
+                lastmove = [num, i]
             elif (turn == 2):
                 setchar(num, i, p2symbol)
+                lastmove = [num, i]
             break
 
 
@@ -142,11 +226,11 @@ def checkmove(num: int):
 
 
 def setchar(x, y, content):
-    board[y][x] = content
+    board[x][y] = content
 
 
 def getchar(x, y):
-    return board[y][x]
+    return board[x][y]
 
 
 def getplayerdata():
@@ -214,6 +298,25 @@ def printboard():
                     print(hline + hline + hline + hline + hline + tdown, end='')
                 else:
                     print(hline + hline + hline + hline + hline + drcorner)
+
+
+def isinbounds(x: int, y: int):
+    if (0 <= x and 0 <= y and x <= cols and y <= rows):
+        print(x, y, "in")
+        return True
+    print(x, y, "out")
+    return False
+
+    #try:
+    #    c = getchar(x, y)
+    #    print(x,y, "in")
+    #except IndexError:
+    #    print(x, y, "out")
+    #    fuckoff()
+
+
+def fuckoff():
+    x: bool = True
 
 
 if __name__ == '__main__':
